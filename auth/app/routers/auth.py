@@ -47,3 +47,8 @@ def refresh(body: schemas.RefreshRequest, session: Session = Depends(get_session
     access = security.create_access_token(str(rt.user_id))
     # minimal approach: do not rotate refresh token yet
     return schemas.RefreshResponse(access_token=access, refresh_token=body.refresh_token)
+
+@router.post("/forgot-password")
+def forgot_password(body: schemas.ForgotPasswordRequest):
+    # Minimal placeholder: pretend to enqueue reset email. Always 202 style response.
+    return {"status": "accepted"}
