@@ -35,3 +35,15 @@ def login(credentials: schemas.LoginRequest, session: Session = Depends(get_sess
     rt = models.RefreshToken(user_id=user.id, token_hash=refresh_hash, expires_at=expires)
     session.add(rt)
     return schemas.LoginResponse(user=user, access_token=access, refresh_token=raw_refresh)
+
+@router.post("/refresh", response_model=schemas.RefreshResponse)
+def refresh(body: schemas.RefreshRequest, session: Session = Depends(get_session)):
+    hashed = security.hash_refresh_token(body.refresh_token)
+    rt = session.scalar(select(models.RefreshToken).where(models.RefreshToken.token_hash == hashed))
+    if not rt:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
+    if rt.expires_at < datetime.now(timezone.utc):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Expired refresh token")
+    access = security.create_access_token(str(rt.user_id))
+    # minimal approach: do not rotate refresh token yet
+    return schemas.RefreshResponse(access_token=access, refresh_token=body.refresh_token)

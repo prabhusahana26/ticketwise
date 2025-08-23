@@ -26,3 +26,12 @@ class TokenPair(BaseModel):
 
 class LoginResponse(TokenPair):
     user: UserOut
+
+class RefreshRequest(BaseModel):
+    refresh_token: str
+
+class RefreshResponse(TokenPair):
+    pass
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
