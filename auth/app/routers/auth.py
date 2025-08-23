@@ -1,9 +1,10 @@
-from fastapi import APIRouter, Depends, Header, HTTPException
+from fastapi import APIRouter, Depends, Header, HTTPException, status
 from sqlalchemy.orm import Session
 from ..database import get_session, Base, engine
 from .. import models, schemas, security
 from sqlalchemy import select
 from typing import Optional
+from datetime import datetime, timezone, timedelta
 
 # Ensure tables exist (simple for initial incremental dev; later use migrations)
 Base.metadata.create_all(bind=engine)
@@ -21,3 +22,16 @@ def register(user_in: schemas.UserCreate, idempotency_key: Optional[str] = Heade
     session.add(user)
     session.flush()  # populate id
     return schemas.RegisterResponse(user=user, created=True)
+
+@router.post("/login", response_model=schemas.LoginResponse)
+def login(credentials: schemas.LoginRequest, session: Session = Depends(get_session)):
+    user = session.scalar(select(models.User).where(models.User.email == credentials.email))
+    if not user or not security.verify_password(credentials.password, user.password_hash):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+    access = security.create_access_token(str(user.id))
+    raw_refresh = security.generate_refresh_token()
+    refresh_hash = security.hash_refresh_token(raw_refresh)
+    expires = datetime.now(timezone.utc) + timedelta(days=security.REFRESH_TOKEN_DAYS)
+    rt = models.RefreshToken(user_id=user.id, token_hash=refresh_hash, expires_at=expires)
+    session.add(rt)
+    return schemas.LoginResponse(user=user, access_token=access, refresh_token=raw_refresh)
