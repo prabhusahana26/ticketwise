@@ -44,8 +44,16 @@ def refresh(body: schemas.RefreshRequest, session: Session = Depends(get_db)):
     rt = session.scalar(select(models.RefreshToken).where(models.RefreshToken.token_hash == hashed))
     if not rt:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
-    if rt.expires_at < datetime.now(timezone.utc):
+    
+    # Ensure both datetimes are timezone-aware for comparison
+    now_utc = datetime.now(timezone.utc)
+    expires_at = rt.expires_at
+    if expires_at.tzinfo is None:
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
+    
+    if expires_at < now_utc:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Expired refresh token")
+    
     access = security.create_access_token(str(rt.user_id))
     # minimal approach: do not rotate refresh token yet
     return schemas.RefreshResponse(access_token=access, refresh_token=body.refresh_token)
