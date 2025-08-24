@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Header, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from ..database import get_db, Base, engine
 from .. import models, schemas, security
@@ -11,9 +11,9 @@ Base.metadata.create_all(bind=engine)
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
-# Idempotency via custom header: X-Idempotency-Key (not stored yet, just allow same email) - we interpret register as idempotent on email
+# Register endpoint - idempotent on email (won't create duplicates)
 @router.post("/register", response_model=schemas.RegisterResponse)
-def register(user_in: schemas.UserCreate, idempotency_key: Optional[str] = Header(default=None, alias="X-Idempotency-Key"), session: Session = Depends(get_db)):
+def register(user_in: schemas.UserCreate, session: Session = Depends(get_db)):
     existing = session.scalar(select(models.User).where(models.User.email == user_in.email))
     if existing:
         return schemas.RegisterResponse(user=existing, created=False)
