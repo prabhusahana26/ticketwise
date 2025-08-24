@@ -6,28 +6,39 @@ FastAPI auth service.
 
 **Option 1: Use the startup script (recommended)**
 ```
+cd auth
 .\run_auth_service.ps1
 ```
 
 **Option 2: Manual setup**
-1. Activate virtual environment:
+1. From auth directory:
 ```
-.\.venv\Scripts\Activate.ps1
-```
-
-2. Install dependencies:
-```
-pip install -r auth/requirements.txt
+cd auth
 ```
 
-3. Start server:
+2. Activate virtual environment:
 ```
-uvicorn auth.app.main:app --reload
+..\.venv\Scripts\Activate.ps1
+```
+
+3. Install dependencies:
+```
+pip install -r requirements.txt
+```
+
+4. Start server:
+```
+uvicorn app.main:app --reload
 ```
 
 ## Environment Setup
 
-Create `auth/app/.env`:
+Create `auth/app/.env` from template:
+```
+cp .env.example app/.env
+```
+
+Edit `app/.env`:
 ```
 DATABASE_URL=mysql+pymysql://root:Vinaychand%407@localhost:3306/ticketwise_auth
 JWT_SECRET=Vinaychand@7
@@ -37,6 +48,14 @@ REFRESH_TOKEN_DAYS=7
 ```
 
 **Important**: Special characters in passwords must be URL-encoded (@ becomes %40)
+
+## Test Database Connection
+
+Before starting the service:
+```
+cd auth
+python test_db_connection.py
+```
 
 ## Endpoints
 ✅ POST /auth/register (implemented)
