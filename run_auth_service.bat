@@ -1,9 +1,0 @@
-@echo off
-echo Activating virtual environment...
-call .venv\Scripts\activate.bat
-
-echo Installing/updating dependencies...
-pip install -r auth\requirements.txt
-
-echo Starting FastAPI server...
-uvicorn auth.app.main:app --reload --host 127.0.0.1 --port 8000
