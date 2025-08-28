@@ -119,15 +119,17 @@ export default function CreateProduct() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setToast(""); // Clear previous toast
+    
     try {
-      await api.post("/products/", {
+      const response = await api.post("/products/", {
         ...form,
         price: parseFloat(form.price),
       });
-      setToast("Product created successfully.");
-      setForm({ name: "", description: "", price: "", priority: "" });
+  setToast("Product created successfully.");
+      setForm({ name: "", description: "", price: "", priority: "low" });
     } catch (err) {
-      setToast("Failed to create product.");
+  setToast("Failed to create product.");
     } finally {
       setLoading(false);
       setTimeout(() => setToast(""), 4000);
